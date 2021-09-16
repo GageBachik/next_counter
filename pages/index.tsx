@@ -41,12 +41,7 @@ const idl = {
           isSigner: false,
         },
       ],
-      args: [
-        {
-          name: "data",
-          type: "u64",
-        },
-      ],
+      args: [],
     },
     {
       name: "update",
@@ -57,12 +52,7 @@ const idl = {
           isSigner: false,
         },
       ],
-      args: [
-        {
-          name: "data",
-          type: "u64",
-        },
-      ],
+      args: [],
     },
   ],
   accounts: [
@@ -72,7 +62,7 @@ const idl = {
         kind: "struct",
         fields: [
           {
-            name: "data",
+            name: "count",
             type: "u64",
           },
         ],
@@ -98,24 +88,28 @@ async function program_fetcher(
 
   if (method == "initialize") {
     await program.rpc
-      .initialize(new anchor.BN(big_number), {
-        accounts: {
-          myAccount: myAccount.publicKey,
-          user: provider.wallet.publicKey,
-          systemProgram: SystemProgram.programId,
-        },
-        signers: [myAccount],
-      })
+      .initialize(
+        /*new anchor.BN(big_number),*/ {
+          accounts: {
+            myAccount: myAccount.publicKey,
+            user: provider.wallet.publicKey,
+            systemProgram: SystemProgram.programId,
+          },
+          signers: [myAccount],
+        }
+      )
       .catch((e) => {
         console.log(e);
       });
   } else if (method == "update") {
     await program.rpc
-      .update(new anchor.BN(big_number), {
-        accounts: {
-          myAccount: myAccount.publicKey,
-        },
-      })
+      .update(
+        /*new anchor.BN(big_number),*/ {
+          accounts: {
+            myAccount: myAccount.publicKey,
+          },
+        }
+      )
       .catch((e) => {
         console.log(e);
       });
@@ -164,8 +158,35 @@ function useUser(method?: string, big_number?: string) {
     mutate,
   };
 }
+//phantom wallet
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 
 function HomePage() {
+  // if (process.browser) {
+  //   const wallets = useMemo(
+  //     () => [getPhantomWallet()],
+  //     ["http://127.0.0.1:8899"]
+  //   );
+  // }
+
+  // phantom wallet support still buggy
+  // const wallet = useWallet();
+
+  // if (!wallet.connected) {
+  //   /* If the user's wallet is not connected, display connect wallet button. */
+  //   return (
+  //     <div
+  //       style={{
+  //         display: "flex",
+  //         justifyContent: "center",
+  //         marginTop: "100px",
+  //       }}
+  //     >
+  //       <WalletMultiButton />
+  //     </div>
+  //   );
+  // }
   const ref = useRef();
   // basic anchor rpc init call and return on page load
   // const [tx, setTx] = useState({ tx: "...loading" });

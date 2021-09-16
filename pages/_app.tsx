@@ -3,9 +3,21 @@ import SWRConfig from "swr";
 
 // import App from "next/app";
 import type { AppProps /*, AppContext */ } from "next/app";
+import dynamic from "next/dynamic";
+
+const WalletConnectionProvider = dynamic(
+  () => import("./components/WalletConnectionProvider"),
+  {
+    ssr: false,
+  }
+);
 
 function MyApp({ Component, pageProps }: AppProps) {
-  return <Component {...pageProps} />;
+  return (
+    <WalletConnectionProvider>
+      <Component {...pageProps} />
+    </WalletConnectionProvider>
+  );
 }
 
 // Only uncomment this method if you have blocking data requirements for

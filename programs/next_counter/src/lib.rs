@@ -13,22 +13,22 @@ pub mod next_counter {
 
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>, data: u64) -> ProgramResult {
+    pub fn initialize(ctx: Context<Initialize>) -> ProgramResult {
         let my_account = &mut ctx.accounts.my_account;
-        my_account.data = data;
+        my_account.count = 0;
         Ok(())
     }
 
-    pub fn update(ctx: Context<Update>, data: u64) -> ProgramResult {
+    pub fn update(ctx: Context<Update>) -> ProgramResult {
         let my_account = &mut ctx.accounts.my_account;
-        my_account.data = data;
+        my_account.count += 1;
         Ok(())
     }
 }
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
-    #[account(init, payer = user, space=8+8)]
+    #[account(init, payer = user, space = 16 + 16)]
     pub my_account: Account<'info, MyAccount>,
     pub user: AccountInfo<'info>,
     pub system_program: AccountInfo<'info>,
@@ -42,5 +42,5 @@ pub struct Update<'info> {
 
 #[account]
 pub struct MyAccount {
-    pub data: u64,
+    pub count: u64,
 }

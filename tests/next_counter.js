@@ -30,7 +30,7 @@ describe("next_counter", () => {
 
     // Create the new account and initialize it with the program.
     // #region code-simplified
-    await program.rpc.initialize(new anchor.BN(1234), {
+    await program.rpc.initialize({
       accounts: {
         myAccount: myAccount.publicKey,
         user: provider.wallet.publicKey,
@@ -44,7 +44,7 @@ describe("next_counter", () => {
     const account = await program.account.myAccount.fetch(myAccount.publicKey);
 
     // Check it's state was initialized.
-    assert.ok(account.data.eq(new anchor.BN(1234)));
+    assert.ok(account.count.eq(new anchor.BN(0)));
 
     // Store the account for the next test.
     _myAccount = myAccount;
@@ -62,7 +62,7 @@ describe("next_counter", () => {
     const program = anchor.workspace.NextCounter;
 
     // Invoke the update rpc.
-    await program.rpc.update(new anchor.BN(4321), {
+    await program.rpc.update({
       accounts: {
         myAccount: myAccount.publicKey,
       },
@@ -73,7 +73,7 @@ describe("next_counter", () => {
     const account = await program.account.myAccount.fetch(myAccount.publicKey);
 
     // Check it's state was mutated.
-    assert.ok(account.data.eq(new anchor.BN(4321)));
+    assert.ok(account.count.eq(new anchor.BN(1)));
 
     // #endregion update-test
   });

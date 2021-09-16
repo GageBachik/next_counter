@@ -14,6 +14,7 @@ import {
 } from "@solana/wallet-adapter-wallets";
 import { clusterApiUrl } from "@solana/web3.js";
 import { FC, useMemo } from "react";
+import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 
 const WalletConnectionProvider: FC = ({ children }) => {
   //   // Can be set to 'devnet', 'testnet', or 'mainnet-beta'
@@ -44,7 +45,7 @@ const WalletConnectionProvider: FC = ({ children }) => {
   return (
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect>
-        {children}
+        <WalletModalProvider>{children}</WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
   );

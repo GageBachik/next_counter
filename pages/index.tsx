@@ -124,7 +124,7 @@ async function program_fetcher(
   console.log("balance", balance / LAMPORTS_PER_SOL);
   console.log("pubkey: ", myAccount.publicKey.toString());
   if (account != undefined) {
-    return { data: account.data.toString() };
+    return { data: account.count.toString() };
   } else {
     const signature = await connection
       .requestAirdrop(myAccount.publicKey, LAMPORTS_PER_SOL)
@@ -160,7 +160,10 @@ function useUser(method?: string, big_number?: string) {
 }
 //phantom wallet
 import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import {
+  WalletMultiButton,
+  WalletDisconnectButton,
+} from "@solana/wallet-adapter-react-ui";
 
 function HomePage() {
   // if (process.browser) {
@@ -170,23 +173,23 @@ function HomePage() {
   //   );
   // }
 
-  // phantom wallet support still buggy
-  // const wallet = useWallet();
+  // phantom wallet fixed
+  const wallet = useWallet();
 
-  // if (!wallet.connected) {
-  //   /* If the user's wallet is not connected, display connect wallet button. */
-  //   return (
-  //     <div
-  //       style={{
-  //         display: "flex",
-  //         justifyContent: "center",
-  //         marginTop: "100px",
-  //       }}
-  //     >
-  //       <WalletMultiButton />
-  //     </div>
-  //   );
-  // }
+  if (!wallet.connected) {
+    /* If the user's wallet is not connected, display connect wallet button. */
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          marginTop: "100px",
+        }}
+      >
+        <WalletMultiButton />
+      </div>
+    );
+  }
   const ref = useRef();
   // basic anchor rpc init call and return on page load
   // const [tx, setTx] = useState({ tx: "...loading" });
@@ -245,6 +248,7 @@ function HomePage() {
         <div className="text-center lg:text-left">
           <h1 className="mb-5 text-5xl font-bold">Anchor Account Data</h1>
           <p className="mb-5">{user.data}</p>
+          <WalletDisconnectButton />
         </div>
         <div className="card flex-shrink-0 w-full max-w-sm shadow-2xl bg-base-100">
           <div className="card-body">

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import useSWR from "swr";
 
 //anchor boilerplate setup
+import idl from "./utils/idl";
 const anchor = require("@project-serum/anchor");
 const { SystemProgram, Keypair, Connection, PublicKey, LAMPORTS_PER_SOL } =
   anchor.web3;
@@ -16,69 +17,16 @@ const option = anchor.Provider.defaultOptions();
 const provider = new anchor.Provider(connection, wallet, option);
 anchor.setProvider(provider);
 
-const myAccount = Keypair.generate();
+// if not using a wallet generate random wallet for each page refresh
+// const myAccount = Keypair.generate();
 
-const idl = {
-  version: "0.0.0",
-  name: "next_counter",
-  instructions: [
-    {
-      name: "initialize",
-      accounts: [
-        {
-          name: "myAccount",
-          isMut: true,
-          isSigner: true,
-        },
-        {
-          name: "user",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "systemProgram",
-          isMut: false,
-          isSigner: false,
-        },
-      ],
-      args: [],
-    },
-    {
-      name: "update",
-      accounts: [
-        {
-          name: "myAccount",
-          isMut: true,
-          isSigner: false,
-        },
-      ],
-      args: [],
-    },
-  ],
-  accounts: [
-    {
-      name: "MyAccount",
-      type: {
-        kind: "struct",
-        fields: [
-          {
-            name: "count",
-            type: "u64",
-          },
-        ],
-      },
-    },
-  ],
-  metadata: {
-    address: "9mTvtHmMmDTkmX6cUoXQwzp977EAzYidynANfP9NzPUG",
-  },
-};
 const programId = new PublicKey("9mTvtHmMmDTkmX6cUoXQwzp977EAzYidynANfP9NzPUG");
 const program = new anchor.Program(idl, programId);
 //end anchor boilerplate setup
 
 async function program_fetcher(
   _api: string,
+  myAccount: any,
   method: string,
   big_number: string
 ) {
@@ -86,19 +34,22 @@ async function program_fetcher(
     `fetching program with method: ${method} and big_number: ${big_number}`
   );
 
+  const BaseAccount = Keypair.generate();
+
   if (method == "initialize") {
     await program.rpc
       .initialize(
         /*new anchor.BN(big_number),*/ {
           accounts: {
-            myAccount: myAccount.publicKey,
+            myAccount: BaseAccount.publicKey,
             user: provider.wallet.publicKey,
             systemProgram: SystemProgram.programId,
           },
-          signers: [myAccount],
+          signers: [BaseAccount],
         }
       )
       .catch((e) => {
+        console.log("new tx failed");
         console.log(e);
       });
   } else if (method == "update") {
@@ -106,7 +57,7 @@ async function program_fetcher(
       .update(
         /*new anchor.BN(big_number),*/ {
           accounts: {
-            myAccount: myAccount.publicKey,
+            myAccount: BaseAccount.publicKey,
           },
         }
       )
@@ -115,22 +66,22 @@ async function program_fetcher(
       });
   }
   const account = await program.account.myAccount
-    .fetch(myAccount.publicKey)
+    .fetch(BaseAccount.publicKey)
     .catch((e) => {
       console.log(e);
     });
   console.log("account", account);
-  const balance = await connection.getBalance(myAccount.publicKey);
+  const balance = await connection.getBalance(BaseAccount.publicKey);
   console.log("balance", balance / LAMPORTS_PER_SOL);
-  console.log("pubkey: ", myAccount.publicKey.toString());
+  console.log("pubkey: ", BaseAccount.publicKey.toString());
   if (account != undefined) {
     return { data: account.count.toString() };
   } else {
-    const signature = await connection
-      .requestAirdrop(myAccount.publicKey, LAMPORTS_PER_SOL)
-      .catch((e) => {
-        console.log(e);
-      });
+    // const signature = await connection
+    //   .requestAirdrop(myAccount.publicKey, LAMPORTS_PER_SOL)
+    //   .catch((e) => {
+    //     console.log(e);
+    //   });
     // await connection.confirmTransaction(signature);
     // const balance = await connection.getBalance(myAccount.publicKey);
     // console.log("balance", balance / LAMPORTS_PER_SOL);
@@ -142,12 +93,12 @@ async function program_fetcher(
   }
 }
 
-function useUser(method?: string, big_number?: string) {
+function useUser(myAccount: any, method?: string, big_number?: string) {
   console.log(method, big_number);
   method = method || "No Account";
   big_number = big_number || "0000";
   const { data, mutate, error } = useSWR(
-    ["program_rpc", method, big_number],
+    ["program_rpc", myAccount, method, big_number],
     program_fetcher
   );
   const loading = !data && !error;
@@ -166,17 +117,12 @@ import {
 } from "@solana/wallet-adapter-react-ui";
 
 function HomePage() {
-  // if (process.browser) {
-  //   const wallets = useMemo(
-  //     () => [getPhantomWallet()],
-  //     ["http://127.0.0.1:8899"]
-  //   );
-  // }
-
+  const ref = useRef();
   // phantom wallet fixed
-  const wallet = useWallet();
+  const phantomWallet = useWallet();
+  const { user, mutate, loading } = useUser(phantomWallet);
 
-  if (!wallet.connected) {
+  if (!phantomWallet.connected) {
     /* If the user's wallet is not connected, display connect wallet button. */
     return (
       <div
@@ -190,25 +136,8 @@ function HomePage() {
       </div>
     );
   }
-  const ref = useRef();
-  // basic anchor rpc init call and return on page load
-  // const [tx, setTx] = useState({ tx: "...loading" });
-  // const fetchTx = async () => {
-  //   const tx = await program.rpc.initialize();
-  //   return tx;
-  // };
-  // useEffect(() => {
-  //   const getTx = async () => {
-  //     const tx = await fetchTx();
-  //     console.log("tx", tx);
-  //     setTx({ tx: tx });
-  //   };
-  //   getTx();
-  // }, []);
-
   // New nextjs swr setup for more advanced rpc calls
-  const { user, mutate, loading } = useUser();
-
+  // const { user, mutate, loading } = useUser(myAccount); -- if not using phantom
   if (loading) {
     return <p>Loading...</p>;
   }
@@ -275,8 +204,10 @@ function HomePage() {
                       user.data ==
                       "Initialize an account with the form to the right to get started. The account data will show up in this box afterwards."
                     ) {
+                      // console.log("### NINININI ###");
                       await program_fetcher(
                         "program_rpc",
+                        phantomWallet,
                         "initialize",
                         big_number.value
                       );
@@ -284,6 +215,7 @@ function HomePage() {
                     } else {
                       await program_fetcher(
                         "program_rpc",
+                        phantomWallet,
                         "update",
                         big_number.value
                       );
